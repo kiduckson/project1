@@ -1,0 +1,163 @@
+{% extends "layout.html" %} {% block title %} book {% endblock %} {% block main
+%}
+<link
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"
+  rel="stylesheet"
+/>
+
+
+<style>
+  .goodread_stars-outer {
+    display: inline-block;
+    position: relative;
+    font-family: FontAwesome;
+    font-size: 1.2rem;
+  }
+
+  .goodread_stars-outer::before {
+    content: "\f005 \f005 \f005 \f005 \f005";
+    color: #fff4e1;
+  }
+
+  .goodread_stars-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 1.2rem;
+    width: 0%;
+  }  
+  .goodread_stars-inner::before {
+    content: "\f005 \f005 \f005 \f005 \f005";
+    color: #fdd10e;
+  }
+
+  #rating {
+    font-family: FontAwesome;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    width: fit-content;
+  }
+  #rating > option::before {
+      content:'\f005 ';
+      color: #fff4e1;
+      cursor:pointer;
+      font-size:3em;
+  }
+  #rating:hover > option::before {
+      color: #fdd10e;
+  }
+
+  #rating > option:hover ~ option::before {
+      color: #fff4e1;
+  }
+  
+  #rating option.active::before {
+    color: #fdd10e;
+  }
+
+</style>
+
+
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>{{error}}</strong>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endif%}
+
+  <div class="row">
+    <div class="col-lg-6 md-6 sm-12">
+
+      <div class="card">
+        <div class="card-body">
+          <img
+            src="http://covers.openlibrary.org/b/isbn/{{book.isbn}}-L.jpg"
+            class="card-img-top"
+            alt="..."
+          />
+          <h4 class="card-title mt-3">{{book.title}}</h4>
+          <h5 class="card-text">by {{book.author}}</h5>
+          <h6 class="card-subtitle mt-1 text-muted">Published Year:{{book.year}} <small>ISNB: {{book.isbn}}</small></h6>
+                    
+          <hr />
+          <div class="goodread_stars-outer">
+            <div class="goodread_stars-inner"></div>
+          </div>
+            <span style="font-size: 1.2rem; color: gold; font-weight: bold; display:inline;">{{ result["average_rating"] }}</span>       
+            <small class="ml-3" style="color:green"> {{result['reviews_count']}} reviews </small>
+          </div>      
+      </div>
+
+    </div>
+    <div class="col-lg-6 md-6 sm-12"">          
+      <form action="{{ url_for('book', book_id = book.id) }}" method="post">
+        <div class="form-group">
+          <label for="rating">Give it a score</label>
+          <div id="rating"> 
+            <option id="star01" value="1"></option>
+            <option id="star02" value="2"></option>
+            <option id="star03" value="3"></option>
+            <option id="star04" value="4"></option>
+            <option id="star05" value="5"></option>                       
+          </div>
+          <label for="review" name="review_title">Post a review</label>
+          <textarea
+            class="form-control"
+            name="content"
+            rows="5"
+            required
+          ></textarea>
+          <input type="hidden" id="rating_score" name="rating_score" required/>
+          <button class="btn btn-primary mt-2" type="submit">Submit</button>
+        </div>
+      </form>
+      <hr />
+      {% if reviews %}
+      {% for r in reviews %}
+      <div class="card mb-1">
+        <div class="card-body">
+          <h5 class="card-title">{{r.username}}</h5>
+          <h6 class="card-subtitle mb-2 text-muted">{{ r['time'].strftime('%Y-%m-%d, %H:%M:%S') }}</h6>
+          {% for i in range(r['rating']) %}          
+          <span class="fa fa-star" style="color: #fdd10e"></span>
+          {% endfor %}
+          {% for j in range( 5 - r['rating']) %} 
+          <span class="fa fa-star" style="color: #fff4e1"></span>
+          {% endfor %}
+          <p class="card-text">{{r.content}}</p>
+        </div>
+      </div>  
+      {% endfor %}
+      {% else %}      
+        <h6>No reviews</h6>         
+      {% endif %}
+    </div>
+  </div>
+
+
+
+  <script type="text/javascript">
+
+    document.querySelector('#rating').addEventListener('click', (e) => {       
+        let action = 'add';
+        document.querySelector("#rating_score").value = e.target.value 
+        for (const option of e.currentTarget.children) {
+        option.classList[action]('active');
+        if (option === e.target) action = 'remove';          
+        }         
+    });
+
+
+    const rating = '{{ result["average_rating"] }}';
+    const starTotal = 5;
+    const starPercentage = (rating / starTotal) * 100;
+    const starPercentageRounded = `${Math.round(starPercentage / 10) * 10}%`;
+
+    document.querySelector(".goodread_stars-inner").style.width = starPercentageRounded;
+  </script>
+  {% endblock %}
+</table>
